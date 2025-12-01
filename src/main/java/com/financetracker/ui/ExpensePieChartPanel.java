@@ -103,8 +103,6 @@ public class ExpensePieChartPanel extends JPanel {
         }
         
         // Gambar Total di tengah (opsional, buat donut chart)
-        // g2d.setColor(Color.WHITE);
-        // g2d.fillOval(chartX + chartDiameter/4, chartY + chartDiameter/4, chartDiameter/2, chartDiameter/2);
     }
 
     private void drawLegend(Graphics2D g2, String category, double amount, Color color, int x, int y) {

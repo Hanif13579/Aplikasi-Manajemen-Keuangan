@@ -23,7 +23,7 @@ public class YearlyReportStrategy implements ReportStrategy {
 
         List<Transaction> yearlyTx = transactions.stream()
                 .filter(t -> t.getDate().getYear() == currentYear)
-                .collect(Collectors.toList());
+                .toList();
 
         if (yearlyTx.isEmpty()) {
             return "Tidak ada transaksi tahun ini (" + currentYear + ").";
@@ -48,19 +48,19 @@ public class YearlyReportStrategy implements ReportStrategy {
         double totalExpense = expensePerMonth.values().stream().mapToDouble(Double::doubleValue).sum();
 
         StringBuilder report = new StringBuilder();
-        report.append(String.format("Laporan Tahunan (%d):\n", currentYear));
-        report.append("----------------------------\n");
-        report.append(String.format("Total Pemasukan: Rp %,.2f\n", totalIncome));
-        report.append(String.format("Total Pengeluaran: Rp %,.2f\n", totalExpense));
-        report.append(String.format("Total Bersih: Rp %,.2f\n\n", (totalIncome - totalExpense)));
-        report.append("Ringkasan per Bulan:\n");
+        report.append(String.format("Laporan Tahunan (%d):%n", currentYear));
+        report.append(String.format("----------------------------%n"));
+        report.append(String.format("Total Pemasukan: Rp %,.2f%n", totalIncome));
+        report.append(String.format("Total Pengeluaran: Rp %,.2f%n", totalExpense));
+        report.append(String.format("Total Bersih: Rp %,.2f%n%n", (totalIncome - totalExpense)));
+        report.append(String.format("Ringkasan per Bulan:%n"));
 
         for (java.time.Month month : java.time.Month.values()) {
             double income = incomePerMonth.getOrDefault(month.toString(), 0.0);
             double expense = expensePerMonth.getOrDefault(month.toString(), 0.0);
             if(income > 0 || expense > 0) {
-                 report.append(String.format("- %s: Pemasukan Rp %,.2f | Pengeluaran Rp %,.2f | Bersih Rp %,.2f\n",
-                    month, income, expense, (income - expense)));
+                report.append(String.format("- %s: Pemasukan Rp %,.2f | Pengeluaran Rp %,.2f | Bersih Rp %,.2f%n",
+                month, income, expense, (income - expense)));
             }
         }
 

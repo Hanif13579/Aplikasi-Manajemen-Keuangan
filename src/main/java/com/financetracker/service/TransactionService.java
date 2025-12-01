@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.financetracker.model.Category;
 import com.financetracker.model.Transaction;
@@ -76,7 +75,7 @@ public class TransactionService implements BudgetSubject {
                 .filter(tx -> category == null || tx.getCategory() == category)
                 .filter(tx -> startDate == null || !tx.getDate().isBefore(startDate))
                 .filter(tx -> endDate == null || !tx.getDate().isAfter(endDate))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -147,10 +146,14 @@ public class TransactionService implements BudgetSubject {
         // Kirim notifikasi 1 kali ketika melewati budget
         if (percentage >= 100 && !budgetNotificationSent) {
             String message = String.format(
-                    "⚠️ BUDGET WARNING!\n\n" +
-                    "Pengeluaran bulan ini: Rp %,.2f\n" +
-                    "Budget Anda: Rp %,.2f\n\n" +
-                    "Pengeluaran telah melampaui batas!",
+                    """
+                    ⚠️ BUDGET WARNING!
+
+                    Pengeluaran bulan ini: Rp %,.2f
+                    Budget Anda: Rp %,.2f
+
+                    Pengeluaran telah melampaui batas!
+                    """,
                     spending, monthlyBudget
             );
             notifyObservers(message);

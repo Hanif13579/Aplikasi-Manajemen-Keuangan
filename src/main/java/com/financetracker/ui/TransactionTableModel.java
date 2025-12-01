@@ -13,9 +13,9 @@ import java.util.ArrayList;
  */
 public class TransactionTableModel extends AbstractTableModel {
 
-    private final List<Transaction> transactions;
+    private final transient List<Transaction> transactions;
     private final String[] columnNames = {"ID", "Tanggal", "Deskripsi", "Tipe", "Kategori", "Jumlah (Rp)"};
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public TransactionTableModel() {
         this.transactions = new ArrayList<>();

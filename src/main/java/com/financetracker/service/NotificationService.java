@@ -2,6 +2,8 @@ package com.financetracker.service;
 
 import com.financetracker.patterns.observer.BudgetObserver;
 import com.financetracker.storage.StorageManager;
+import java.util.logging.Logger; // Import Logger
+import java.util.logging.Level;  // Import Level
 
 /**
  * Implementasi Observer Pattern.
@@ -10,6 +12,9 @@ import com.financetracker.storage.StorageManager;
  */
 public class NotificationService implements BudgetObserver {
 
+    // 1. Deklarasi Logger (biasanya static final)
+    private static final Logger logger = Logger.getLogger(NotificationService.class.getName());
+    
     private final StorageManager storageManager;
 
     public NotificationService() {
@@ -21,7 +26,9 @@ public class NotificationService implements BudgetObserver {
      */
     @Override
     public void update(String message) {
-        System.out.println("NotificationService Menerima Update: " + message);
+        // 2. Mengganti System.out.println dengan logger.info
+        logger.log(Level.INFO, "NotificationService Menerima Update: {0}", message);
+        
         storageManager.logNotification(message);
     }
 }

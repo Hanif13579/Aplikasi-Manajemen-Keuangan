@@ -14,26 +14,37 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * StorageManager — versi final, aman, lengkap.
- * - Auto create folder / file
- * - Menyimpan transaksi
- * - Menyimpan log
- * - Persistensi budget (save/load)
- * - Aman dari error Path
+ * StorageManager — versi Refactored (Clean Code).
+ * - Menggunakan Logger (bukan System.out).
+ * - Singleton aman (Eager Initialization).
+ * - Konstanta terpusat.
  */
 public class StorageManager {
 
-    private static volatile StorageManager instance;
+    // 1. Logger menggantikan System.out/err
+    private static final Logger logger = Logger.getLogger(StorageManager.class.getName());
+
+    // 2. Singleton Pattern yang Aman & Ringkas (Eager Initialization)
+    // Tidak perlu 'volatile' atau 'synchronized' yang rumit.
+    private static final StorageManager INSTANCE = new StorageManager();
+
     private final Gson gson;
 
-    // Directories & files
+    // 3. Konstanta File & Direktori
     private static final String DATA_DIR = "data";
     private static final String TRANSACTIONS_FILE = DATA_DIR + "/transactions.json";
     private static final String NOTIFICATIONS_FILE = DATA_DIR + "/notifications.log";
     private static final String BUDGET_FILE = DATA_DIR + "/budget.txt";
+    private static final String DEFAULT_BUDGET = "2000000";
 
+    // Formatter dibuat static agar hemat memori (tidak dibuat berulang-ulang)
+    private static final DateTimeFormatter LOG_TIMESTAMP_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    // Constructor Private
     private StorageManager() {
         gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
@@ -44,43 +55,45 @@ public class StorageManager {
     }
 
     /**
+     * Akses satu-satunya ke instance StorageManager.
+     */
+    public static StorageManager getInstance() {
+        return INSTANCE;
+    }
+
+    /**
      * Pastikan folder dan file penting ada.
      */
     private void ensureStorage() {
         try {
-            // Buat folder data jika tidak ada
-            Files.createDirectories(Paths.get(DATA_DIR));
-
-            // Jika file transaksi belum ada → buat file kosong
-            if (!Files.exists(Paths.get(TRANSACTIONS_FILE))) {
-                Files.write(Paths.get(TRANSACTIONS_FILE), "[]".getBytes(StandardCharsets.UTF_8));
+            Path dataPath = Paths.get(DATA_DIR);
+            if (!Files.exists(dataPath)) {
+                Files.createDirectories(dataPath);
+                logger.info("Direktori 'data' dibuat.");
             }
 
-            // Jika file budget tidak ada → buat budget default
-            if (!Files.exists(Paths.get(BUDGET_FILE))) {
-                Files.write(Paths.get(BUDGET_FILE), "2000000".getBytes(StandardCharsets.UTF_8)); // default 2 jt
+            // Cek file transaksi
+            Path transPath = Paths.get(TRANSACTIONS_FILE);
+            if (!Files.exists(transPath)) {
+                Files.write(transPath, "[]".getBytes(StandardCharsets.UTF_8));
             }
 
-            // Jika log tidak ada, buat kosong
-            if (!Files.exists(Paths.get(NOTIFICATIONS_FILE))) {
-                Files.write(Paths.get(NOTIFICATIONS_FILE),
-                        "".getBytes(StandardCharsets.UTF_8));
+            // Cek file budget
+            Path budgetPath = Paths.get(BUDGET_FILE);
+            if (!Files.exists(budgetPath)) {
+                Files.write(budgetPath, DEFAULT_BUDGET.getBytes(StandardCharsets.UTF_8));
+            }
+
+            // Cek file log
+            Path logPath = Paths.get(NOTIFICATIONS_FILE);
+            if (!Files.exists(logPath)) {
+                Files.createFile(logPath);
             }
 
         } catch (IOException e) {
-            System.err.println("Gagal memastikan direktori penyimpanan: " + e.getMessage());
+            // Gunakan Logger Level SEVERE untuk error
+            logger.log(Level.SEVERE, "Gagal memastikan direktori penyimpanan", e);
         }
-    }
-
-    public static StorageManager getInstance() {
-        if (instance == null) {
-            synchronized (StorageManager.class) {
-                if (instance == null) {
-                    instance = new StorageManager();
-                }
-            }
-        }
-        return instance;
     }
 
     // ============================================================
@@ -91,7 +104,7 @@ public class StorageManager {
         try (Writer writer = new FileWriter(TRANSACTIONS_FILE, StandardCharsets.UTF_8)) {
             gson.toJson(transactions, writer);
         } catch (IOException e) {
-            System.err.println("Gagal menyimpan transaksi: " + e.getMessage());
+            logger.log(Level.SEVERE, "Gagal menyimpan transaksi", e);
         }
     }
 
@@ -101,7 +114,7 @@ public class StorageManager {
             List<Transaction> transactions = gson.fromJson(reader, listType);
             return (transactions != null) ? transactions : new ArrayList<>();
         } catch (IOException e) {
-            System.err.println("Gagal memuat transaksi: " + e.getMessage());
+            logger.log(Level.SEVERE, "Gagal memuat transaksi", e);
             return new ArrayList<>();
         }
     }
@@ -111,7 +124,8 @@ public class StorageManager {
     // ============================================================
 
     public void logNotification(String message) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        // Menggunakan formatter static
+        String timestamp = LocalDateTime.now().format(LOG_TIMESTAMP_FORMAT);
         String logEntry = String.format("[%s] %s%n", timestamp, message);
 
         try {
@@ -120,7 +134,7 @@ public class StorageManager {
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND);
         } catch (IOException e) {
-            System.err.println("Gagal menulis log notifikasi: " + e.getMessage());
+            logger.log(Level.SEVERE, "Gagal menulis log notifikasi", e);
         }
     }
 
@@ -136,8 +150,8 @@ public class StorageManager {
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING
             );
-        } catch (Exception e) {
-            System.err.println("Gagal menyimpan budget: " + e.getMessage());
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Gagal menyimpan budget", e);
         }
     }
 
@@ -145,7 +159,8 @@ public class StorageManager {
         try {
             String text = Files.readString(Paths.get(BUDGET_FILE));
             return Double.parseDouble(text.trim());
-        } catch (Exception e) {
+        } catch (IOException | NumberFormatException e) {
+            logger.log(Level.WARNING, "Gagal memuat budget (gunakan default)", e);
             return null;
         }
     }

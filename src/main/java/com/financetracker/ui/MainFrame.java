@@ -15,21 +15,18 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
-import javax.swing.SpinnerDateModel;
 
 public class MainFrame extends JFrame {
 
     // Services
-    private TransactionService transactionService;
-    private ReportService reportService;
-    private OpenAIService openAIService;
+    private transient TransactionService  transactionService;
+    private transient ReportService reportService;
+    private transient OpenAIService openAIService;
 
     // Table & Models
     private JTable transactionTable;
@@ -38,30 +35,29 @@ public class MainFrame extends JFrame {
     // Budget UI
     private JLabel budgetLabel;
     private JProgressBar budgetProgressBar;
-    private JButton setBudgetButton;
 
     // Input panel components
     private JTextField dateField;
-    private JButton datePickerButton;
     private JTextField descriptionField;
     private JTextField amountField;
     private JComboBox<TransactionType> typeComboBox;
     private JComboBox<Category> categoryComboBox;
-    private JButton addButton;
+
 
     // Filter panel components
     private JComboBox<Category> filterCategoryComboBox;
     private JTextField filterStartDateField;
     private JTextField filterEndDateField;
-    private JButton filterButton;
     private JButton deleteButton;
 
     // Report & AI
     private JComboBox<ReportStrategy> reportComboBox;
-    private JButton reportButton;
-    private JButton aiAdviceButton;
 
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    //Date Pattern
+    private static final String DATE_PATTERN = "yyyy-MM-dd";
+    
+
+    private final transient DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
 
     public MainFrame() {
         initServices();
@@ -81,7 +77,7 @@ public class MainFrame extends JFrame {
     private void initUI() {
 
         setTitle("Personal Finance Tracker");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         getContentPane().setLayout(new BorderLayout(10, 10));
         ((JPanel) getContentPane()).setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -125,7 +121,7 @@ public class MainFrame extends JFrame {
         g.gridx = 1;
         panel.add(dateField, g);
 
-        datePickerButton = new JButton("📅");
+        JButton datePickerButton = new JButton("📅");
         datePickerButton.setMargin(new Insets(2, 8, 2, 8));
         datePickerButton.addActionListener(e -> showDatePickerDialog());
         g.gridx = 2;
@@ -166,7 +162,7 @@ public class MainFrame extends JFrame {
 
         // Tombol Tambah
         y++;
-        addButton = new JButton("Tambah");
+        JButton addButton = new JButton("Tambah");
         addButton.addActionListener(e -> addTransaction());
 
         g.gridx = 0; g.gridy = y; g.gridwidth = 3;
@@ -190,6 +186,7 @@ public class MainFrame extends JFrame {
 
         filterCategoryComboBox = new JComboBox<>(categories);
         filterCategoryComboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
             public Component getListCellRendererComponent(JList<?> list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 
@@ -202,7 +199,7 @@ public class MainFrame extends JFrame {
         filterStartDateField = new JTextField(10);
         filterEndDateField = new JTextField(10);
 
-        filterButton = new JButton("Filter");
+        JButton filterButton = new JButton("Filter");
         filterButton.addActionListener(e -> filterTransactions());
 
         deleteButton = new JButton("Hapus Terpilih");
@@ -271,7 +268,7 @@ public class MainFrame extends JFrame {
         budgetProgressBar = new JProgressBar(0,100);
         budgetProgressBar.setStringPainted(true);
 
-        setBudgetButton = new JButton("Set Budget");
+        JButton setBudgetButton = new JButton("Set Budget");
         setBudgetButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         setBudgetButton.addActionListener(e -> setBudget());
 
@@ -293,6 +290,7 @@ public class MainFrame extends JFrame {
 
         reportComboBox = new JComboBox<>(options);
         reportComboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                     boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -301,10 +299,10 @@ public class MainFrame extends JFrame {
             }
         });
 
-        reportButton = new JButton("Buat Laporan");
+        JButton reportButton = new JButton("Buat Laporan");
         reportButton.addActionListener(e -> generateReport());
 
-        aiAdviceButton = new JButton("Dapatkan Saran Keuangan (AI)");
+        JButton aiAdviceButton = new JButton("Dapatkan Saran Keuangan (AI)");
         aiAdviceButton.setBackground(new Color(50, 150, 70));
         aiAdviceButton.setForeground(Color.WHITE);
         aiAdviceButton.addActionListener(e -> openAIChatDialog());
@@ -441,7 +439,7 @@ public class MainFrame extends JFrame {
 
         try {
             double value = Double.parseDouble(input);
-            if (value < 0) throw new Exception("Budget harus ≥ 0");
+            if (value < 0) throw new NumberFormatException("Budget harus ≥ 0");
 
             transactionService.setMonthlyBudget(value);
             refreshBudget();
@@ -485,11 +483,22 @@ public class MainFrame extends JFrame {
             protected String doInBackground() {
                 return openAIService.startFinancialAdviceSession(summary);
             }
+            @Override
             protected void done() {
                 loading.dispose();
                 String reply;
-                try { reply = get(); }
-                catch (Exception ex) { reply = "Gagal: " + ex.getMessage(); }
+                try {
+                    reply = get();
+                } 
+                catch (InterruptedException e) {
+                    // 1. SOLUSI: Kembalikan status interrupt
+                    Thread.currentThread().interrupt(); 
+                    reply = "Gagal: Proses terganggu (Interrupted)";
+                } 
+                catch (Exception ex) {
+                    // Menangkap error lainnya (seperti ExecutionException)
+                    reply = "Gagal: " + ex.getMessage(); 
+                }
 
                 showChatDialog(reply);
             }
@@ -530,11 +539,19 @@ public class MainFrame extends JFrame {
                 protected String doInBackground() {
                     return openAIService.continueChat(msg);
                 }
+                @Override
                 protected void done() {
                     try {
                         chat.append("AI: " + get() + "\n\n");
                         chat.setCaretPosition(chat.getDocument().getLength());
-                    } catch (Exception ex) {
+                    } 
+                    catch (InterruptedException ex) {
+                        // 1. SOLUSI: Pulihkan status interrupt
+                        Thread.currentThread().interrupt();
+                        chat.append("AI ERROR: Proses terganggu (Interrupted)");
+                    } 
+                    catch (Exception ex) {
+                        // 2. Menangkap error sisanya
                         chat.append("AI ERROR: " + ex.getMessage());
                     }
                 }
@@ -578,7 +595,7 @@ public class MainFrame extends JFrame {
         SpinnerDateModel model = new SpinnerDateModel(new Date(), null, null,
                 java.util.Calendar.DAY_OF_MONTH);
         JSpinner spinner = new JSpinner(model);
-        spinner.setEditor(new JSpinner.DateEditor(spinner, "yyyy-MM-dd"));
+        spinner.setEditor(new JSpinner.DateEditor(spinner, DATE_PATTERN));
 
         JButton ok = new JButton("OK");
         JButton cancel = new JButton("Batal");
@@ -592,7 +609,7 @@ public class MainFrame extends JFrame {
 
         ok.addActionListener(e -> {
             Date selected = model.getDate();
-            String formatted = new SimpleDateFormat("yyyy-MM-dd").format(selected);
+            String formatted = new SimpleDateFormat(DATE_PATTERN).format(selected);
             dateField.setText(formatted);
             dialog.dispose();
         });
