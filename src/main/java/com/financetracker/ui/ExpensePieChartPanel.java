@@ -7,32 +7,49 @@ import com.financetracker.model.TransactionType;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Arc2D;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 public class ExpensePieChartPanel extends JPanel {
 
-    private Map<Category, Double> categoryTotals;
+    // Warna untuk kategori (dibuat static final agar hanya dibuat sekali)
+    private static final Color[] COLORS = {
+        new Color(255, 99, 132),    // Merah
+        new Color(54, 162, 235),    // Biru
+        new Color(255, 206, 86),    // Kuning
+        new Color(75, 192, 192),    // Hijau Teal
+        new Color(153, 102, 255),   // Ungu
+        new Color(255, 159, 64),    // Orange
+        new Color(201, 203, 207)    // Abu
+    };
+    
+    // Field harus final jika diinisialisasi di constructor
+    private final Map<Category, Double> categoryTotals; 
     private double totalExpense;
 
     public ExpensePieChartPanel(List<Transaction> transactions) {
-        calculateData(transactions);
+        // Inisialisasi map dengan memanggil calculateData
+        this.categoryTotals = calculateData(transactions);
         setPreferredSize(new Dimension(500, 400));
         setBackground(Color.WHITE);
     }
 
-    private void calculateData(List<Transaction> transactions) {
-        categoryTotals = new HashMap<>();
-        totalExpense = 0;
+    // Method diubah untuk mengembalikan Map, bukan void (Best Practice)
+    private Map<Category, Double> calculateData(List<Transaction> transactions) {
+        // Menggunakan EnumMap untuk performa (Asumsi Category adalah Enum)
+        Map<Category, Double> totals = new EnumMap<>(Category.class); 
+        this.totalExpense = 0;
 
         for (Transaction t : transactions) {
+            // Menghapus kurung kurawal dan menyederhanakan logika totalExpense
             if (t.getType() == TransactionType.EXPENSE) {
-                categoryTotals.put(t.getCategory(),
-                        categoryTotals.getOrDefault(t.getCategory(), 0.0) + t.getAmount());
-                totalExpense += t.getAmount();
+                totals.put(t.getCategory(),
+                    totals.getOrDefault(t.getCategory(), 0.0) + t.getAmount());
+                this.totalExpense += t.getAmount();
             }
         }
+        return totals;
     }
 
     @Override
@@ -61,17 +78,6 @@ public class ExpensePieChartPanel extends JPanel {
 
         double currentAngle = 90; // Mulai dari atas
 
-        // Warna untuk kategori (hardcoded simple palette)
-        Color[] colors = {
-            new Color(255, 99, 132),   // Merah
-            new Color(54, 162, 235),   // Biru
-            new Color(255, 206, 86),   // Kuning
-            new Color(75, 192, 192),   // Hijau Teal
-            new Color(153, 102, 255),  // Ungu
-            new Color(255, 159, 64),   // Orange
-            new Color(201, 203, 207)   // Abu
-        };
-
         int colorIndex = 0;
         int legendCol = 0;
         int legendRow = 0;
@@ -84,11 +90,11 @@ public class ExpensePieChartPanel extends JPanel {
             double angle = (amount / totalExpense) * 360;
 
             // Gambar Slice
-            g2d.setColor(colors[colorIndex % colors.length]);
+            g2d.setColor(COLORS[colorIndex % COLORS.length]);
             g2d.fill(new Arc2D.Double(chartX, chartY, chartDiameter, chartDiameter, currentAngle, angle, Arc2D.PIE));
 
             // Gambar Legenda
-            drawLegend(g2d, cat.name(), amount, colors[colorIndex % colors.length], legendX + (legendCol * 150), legendY + (legendRow * 20));
+            drawLegend(g2d, cat.name(), amount, COLORS[colorIndex % COLORS.length], legendX + (legendCol * 150), legendY + (legendRow * 20));
             
             // Update posisi
             currentAngle += angle;
@@ -105,6 +111,7 @@ public class ExpensePieChartPanel extends JPanel {
         // Gambar Total di tengah (opsional, buat donut chart)
     }
 
+    // Syntax error 'int int y' sudah diperbaiki
     private void drawLegend(Graphics2D g2, String category, double amount, Color color, int x, int y) {
         g2.setColor(color);
         g2.fillRect(x, y, 15, 15);
