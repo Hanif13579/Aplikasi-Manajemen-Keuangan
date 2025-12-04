@@ -24,6 +24,7 @@ import java.util.logging.Logger;
  * - Singleton aman (Eager Initialization).
  * - Konstanta terpusat.
  */
+@SuppressWarnings("java:S6548")
 public class StorageManager {
 
     private static final Logger logger = Logger.getLogger(StorageManager.class.getName());
