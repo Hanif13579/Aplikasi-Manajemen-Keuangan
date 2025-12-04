@@ -20,16 +20,14 @@ import java.util.logging.Logger;
 /**
  * StorageManager — versi Refactored (Clean Code).
  * - Menggunakan Logger (bukan System.out).
+ * 
  * - Singleton aman (Eager Initialization).
  * - Konstanta terpusat.
  */
 public class StorageManager {
 
-    // 1. Logger menggantikan System.out/err
     private static final Logger logger = Logger.getLogger(StorageManager.class.getName());
 
-    // 2. Singleton Pattern yang Aman & Ringkas (Eager Initialization)
-    // Tidak perlu 'volatile' atau 'synchronized' yang rumit.
     private static final StorageManager INSTANCE = new StorageManager();
 
     private final Gson gson;
@@ -41,7 +39,7 @@ public class StorageManager {
     private static final String BUDGET_FILE = DATA_DIR + "/budget.txt";
     private static final String DEFAULT_BUDGET = "2000000";
 
-    // Formatter dibuat static agar hemat memori (tidak dibuat berulang-ulang)
+
     private static final DateTimeFormatter LOG_TIMESTAMP_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     // Constructor Private

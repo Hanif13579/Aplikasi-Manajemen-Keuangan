@@ -6,5 +6,13 @@
     "amount": 100000.0,
     "type": "EXPENSE",
     "category": "GAJI"
+  },
+  {
+    "id": "5068e34b-f6f3-4160-99f8-5bb22201376b",
+    "date": "2025-12-04",
+    "description": "Nemu Duit",
+    "amount": 100000.0,
+    "type": "INCOME",
+    "category": "GAJI"
   }
 ]

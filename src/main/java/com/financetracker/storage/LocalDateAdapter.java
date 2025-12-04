@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Adapter kustom untuk Gson agar dapat menangani (serialize/deserialize)
+ * 
  * objek java.time.LocalDate, karena Gson default tidak mendukungnya.
  */
 public class LocalDateAdapter extends TypeAdapter<LocalDate> {

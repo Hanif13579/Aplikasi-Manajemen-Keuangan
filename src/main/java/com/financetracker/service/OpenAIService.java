@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 
 /**
  * OpenAIService — Refactored Version.
+ * 
  * - Compliant with SonarQube (Clean Code).
  * - Optimized Regex & Reflection.
  * - Proper Logging.
@@ -203,7 +204,6 @@ public class OpenAIService {
 
             Matcher m = PATTERN_TEXT_QUOTED.matcher(raw);
             if (m.find()) return m.group(1).trim();
-
             m = PATTERN_TEXT_SIMPLE.matcher(raw);
             if (m.find()) return m.group(1).replaceAll("[\\}\\]]+$", "").trim();
 

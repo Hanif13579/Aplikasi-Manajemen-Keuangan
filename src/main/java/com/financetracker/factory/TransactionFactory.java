@@ -14,6 +14,11 @@ import java.util.UUID;
  */
 public class TransactionFactory {
 
+    private TransactionFactory() {
+        throw new IllegalStateException("Utility class");
+    }
+    // ----------------------------
+
     /**
      * Membuat objek Transaction baru.
      *
